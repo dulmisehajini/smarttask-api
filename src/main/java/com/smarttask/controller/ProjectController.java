@@ -5,6 +5,7 @@ import com.smarttask.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -15,7 +16,9 @@ public class ProjectController {
 
     private final ProjectService projectService;
 
+    // Only ADMIN and MANAGER can create projects
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Project> createProject(
             @RequestParam String name,
             @RequestParam String description,
@@ -25,6 +28,7 @@ public class ProjectController {
                 .body(projectService.createProject(name, description, teamId));
     }
 
+    // All authenticated users can view projects
     @GetMapping
     public ResponseEntity<List<Project>> getAllProjects() {
         return ResponseEntity.ok(projectService.getAllProjects());
@@ -33,5 +37,13 @@ public class ProjectController {
     @GetMapping("/{id}")
     public ResponseEntity<Project> getProjectById(@PathVariable Long id) {
         return ResponseEntity.ok(projectService.getProjectById(id));
+    }
+
+    // Only ADMIN can delete projects
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
+        projectService.deleteProject(id);
+        return ResponseEntity.noContent().build();
     }
 }
